@@ -1,7 +1,7 @@
-source "https://supermarket.chef.io"
+source 'https://supermarket.chef.io'
 
 metadata
 
-cookbook 'delivery-sugar',
-  git: 'https://github.com/chef-cookbooks/delivery-sugar.git',
-  branch: 'master'
+group :integration do
+  cookbook 'test-build-cookbook', path: './test/fixtures/cookbooks/test-build-cookbook'
+end

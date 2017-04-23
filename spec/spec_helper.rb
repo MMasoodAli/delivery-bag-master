@@ -1,31 +1,58 @@
+require 'rspec'
+require 'simplecov'
 require 'chefspec'
 require 'chefspec/berkshelf'
 
-TOPDIR = File.expand_path(File.join(File.dirname(__FILE__), ".."))
-$: << File.expand_path(File.dirname(__FILE__))
+SimpleCov.start if ENV['COVERAGE']
+
+# Set minimum code coverage to 90
+SimpleCov.minimum_coverage 90
+
+# SimpleCov Configuration
+SimpleCov.profiles.define 'delivery-sugar' do
+  add_filter '/spec/support'
+  add_filter '/.delivery/'
+end
+
+TOPDIR = File.expand_path(File.join(File.dirname(__FILE__), '..'))
+SUPPORT_DIR = File.join(TOPDIR, 'spec', 'support')
+$LOAD_PATH << File.expand_path(File.dirname(__FILE__))
 
 # Require all our libraries
-Dir['libraries/*.rb'].each { |f| require File.expand_path(f) }
+# We don't require 'z_dsl' here because we need to put assertions in place
+# before we require it.
+Dir['libraries/delivery_*.rb'].each { |f| require File.expand_path(f) }
 
 # Declare common let declarations
 module SharedLetDeclarations
   extend RSpec::SharedContext
-
-  let(:one_changed_cookbook) {[
-    double('delivery sugar cookbook', :name => 'julia', :path => '/tmp/repo/cookbooks/julia', :version => '0.1.0')
-  ]}
-
-  let(:two_changed_cookbooks) {[
-    double('delivery sugar cookbook', :name => 'julia', :path => '/tmp/repo/cookbooks/julia', :version => '0.1.0'),
-    double('delivery sugar cookbook', :name => 'gordon', :path => '/tmp/repo/cookbooks/gordon', :version => '0.2.0')
-  ]}
-
-  let(:no_changed_cookbooks) {[]}
+  let(:cli_node) do
+    {
+      'delivery' => {
+        'workspace_path' => '/workspace',
+        'workspace' => {
+          'repo' => '/workspace/path/to/phase/repo',
+          'cache' => '/workspace/path/to/phase/cache',
+          'chef' => '/workspace/path/to/phase/chef'
+        },
+        'change' => {
+          'stage' => 'stage',
+          'enterprise' => 'ent',
+          'organization' => 'org',
+          'project' => 'proj',
+          'change_id' => 'id',
+          'pipeline' => 'pipe',
+          'patchset_branch' => 'branch',
+          'sha' => 'sha'
+        }
+      }
+    }
+  end
 end
 
 RSpec.configure do |config|
   config.include SharedLetDeclarations
-  config.filter_run_excluding :ignore => true
+  config.filter_run_excluding 'ignore' => true
 
   # Specify the operating platform to mock Ohai data from (default: nil)
   config.platform = 'ubuntu'
